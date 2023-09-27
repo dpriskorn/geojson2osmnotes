@@ -1,4 +1,5 @@
 import osmapi  # type:ignore
+from osmapi import OsmApi
 from pydantic import BaseModel
 from shapely import Point
 
@@ -6,13 +7,16 @@ import config
 
 
 class OsmNoteUploader(BaseModel):
-    client = osmapi.OsmApi()
+    client: OsmApi = OsmApi()
     username: str = config.username
     password: str = config.password
     initialized: bool = False
 
+    class Config:
+        arbitrary_types_allowed = True
+
     def initialize_client(self):
-        self.client = osmapi.OsmApi(self.username, self.password)
+        self.client = OsmApi(self.username, self.password)
         self.initialized = True
 
     def create_and_upload_note(self, point: Point, text: str = config.note_text) -> int:

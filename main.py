@@ -52,7 +52,7 @@ class GeojsonHandler(BaseModel):
     osm_geojson: str = ""
     source_df: DataFrame = DataFrame()
     osm_df: DataFrame = DataFrame()
-    osmnoteuploader = OsmNoteUploader()
+    osmnoteuploader: OsmNoteUploader = OsmNoteUploader()
 
     class Config:
         arbitrary_types_allowed = True
