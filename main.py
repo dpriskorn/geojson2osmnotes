@@ -108,6 +108,7 @@ class GeojsonHandler(BaseModel):
         return f"https://www.openstreetmap.org/note/{note_id}"
 
     def upload_note(self, point: Point):
+        """Upload note based on the point and the text in the config"""
         self.initialize_note_uploader()
         note_id = self.osmnoteuploader.create_and_upload_note(point=point)
         print(f"Note uploaded, see {self.generate_osm_note_url(note_id)}")
@@ -145,7 +146,7 @@ class GeojsonHandler(BaseModel):
                 if config.upload_to_osm:
                     # todo check if a note exists already near this position
                     print("Uploading new note")
-                    self.upload_note()
+                    self.upload_note(point=geometry)
                     exit()
                     input("Press enter to continue")
                 else:

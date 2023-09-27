@@ -25,7 +25,7 @@ class OsmNoteUploader(BaseModel):
         longitude = point.x
         try:
             note = self.client.NoteCreate(
-                dict(latitude=latitude, longitude=longitude, text=text)
+                dict(lat=latitude, lon=longitude, text=text)
             )
             print(note)
             return note["id"]
