@@ -1,14 +1,30 @@
 # geojson2osmnotes
 The purpose of this script is to import geojson features as osm notes.
 
+The purpose is to help curate OSM based on messy data from some source.
+
+In the example below we have unreliable data for bathing sites from a Swedish goverment agency.
+They don't have names for the site, nor a stable identifier. 
+
+Still the points are useful for OSM editors to know about and check out on the ground.
+
+# Features
+Compares a dataset with OSM and creates notes 
+if the source has more information than OSM
+
 # Limitations
+* Cannot import notes yet
 
 # Installation
 Clone the repository.
 
+Run
+
+`$ pip install poetry && poetry install`
+
 # Use
 ## CLI
-`python main.py -xx`
+`python main.py --source-geojson source.geojson --osm-geojson osm.geojson`
 
 You can fiddle with the configuration options in `config.py`
 
@@ -46,8 +62,10 @@ out body;
 out skel qt;
 ```
 
-Both were fed to the script like this
+Both files were fed to the script like this
+
 `$ python main.py --source-geojson badplatser_sverige.geojson --osm-geojson export.geojson`
+
 # License
 GPLv3+
 
@@ -55,3 +73,6 @@ GPLv3+
 To the Magnus Sälgö and the Swedish OSM community for feedback.
 
 # What I learned
+* Chatgpt is not good at handling shapely.geometry.point.Point 
+without explicitly telling it to.
+* Geopandas and geopy are super nice and fast.
