@@ -27,7 +27,7 @@ class OsmNoteUploader(BaseModel):
             note = self.client.NoteCreate(
                 dict(lat=latitude, lon=longitude, text=text)
             )
-            print(note)
+            # print(note)
             return note["id"]
         except Exception as e:
             print(f"Error creating note: {str(e)}")
