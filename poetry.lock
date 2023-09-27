@@ -847,6 +847,20 @@ files = [
 ]
 
 [[package]]
+name = "osmapi"
+version = "4.0.0"
+description = "Python wrapper for the OSM API"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "osmapi-4.0.0-py3-none-any.whl", hash = "sha256:903a9a7427af14b87bb18d30d6f1630652a3eadd284ead36edb83efad5e459ce"},
+    {file = "osmapi-4.0.0.tar.gz", hash = "sha256:f2a65d5ae9d4b582393f858e6d9b75f83183689a0678f85251d72bd6cb36c144"},
+]
+
+[package.dependencies]
+requests = "*"
+
+[[package]]
 name = "packaging"
 version = "23.0"
 description = "Core utilities for Python packages"
@@ -1693,4 +1707,4 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.13"
-content-hash = "898f198a4c2d5685df230477bbce6c7e64ffab2c76f84af2143fe60866e128f3"
+content-hash = "36fc239ec6e106c534fc70cdca2004963f15f639b07b2cf63a8affebdc502899"
