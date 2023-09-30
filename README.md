@@ -22,11 +22,14 @@ Run
 
 `$ pip install poetry && poetry install`
 
+Copy config.
+`$cp sample_config.py config.py`
+
+Edit the config and add your credentials.
+
 # Use
 ## CLI
 `python main.py --source-geojson source.geojson --osm-geojson osm.geojson --notes-file notes.csv`
-
-You can fiddle with the configuration options in `config.py`
 
 # Examples
 ## Bathing sites
