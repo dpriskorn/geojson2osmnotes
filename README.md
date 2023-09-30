@@ -64,7 +64,7 @@ out skel qt;
 
 Both files were fed to the script like this
 
-`$ python main.py --source-geojson badplatser_sverige.geojson --osm-geojson export.geojson`
+`$ python main.py --source-geojson badplatser_sverige.geojson --osm-geojson export.geojson --notes-file notes.csv`
 
 # License
 GPLv3+
