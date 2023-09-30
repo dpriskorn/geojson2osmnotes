@@ -24,7 +24,7 @@ Run
 
 # Use
 ## CLI
-`python main.py --source-geojson source.geojson --osm-geojson osm.geojson`
+`python main.py --source-geojson source.geojson --osm-geojson osm.geojson --notes-file notes.csv`
 
 You can fiddle with the configuration options in `config.py`
 
