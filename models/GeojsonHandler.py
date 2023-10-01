@@ -66,6 +66,8 @@ class GeojsonHandler(BaseModel):
             self.notes_df["open"] = self.notes_df["note_id"].apply(
                 lambda x: self.osmnoteuploader.lookup_note_status(note_id=x)
             )
+            # write back the file
+            self.notes_df.to_csv(self.notes_file_path)
             # store number of open notes in an attibute
             count_open_notes_after_check = self.notes_df["open"].sum()
             print(f"Open notes after check: {count_open_notes_after_check}")
