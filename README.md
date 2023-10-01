@@ -13,7 +13,7 @@ Compares a dataset with OSM and creates notes
 if the source has more information than OSM
 
 # Limitations
-* Cannot import notes yet
+* None known
 
 # Installation
 Clone the repository.
