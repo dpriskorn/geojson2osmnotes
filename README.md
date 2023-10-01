@@ -79,3 +79,4 @@ To the Magnus Sälgö and the Swedish OSM community for feedback.
 * Chatgpt is not good at handling shapely.geometry.point.Point 
 without explicitly telling it to.
 * Geopandas and geopy are super nice and fast.
+* Lambda + apply is a pain in the ass. Fortunately chatgpt provided a working workaround.
