@@ -210,14 +210,16 @@ class GeojsonHandler(BaseModel):
                 if osm_distance_df.empty:
                     print("No bathing site found withing 100m in OSM")
                     print(f"See {self.generate_osm_url(source_point)}")
-                    input("Press enter to continue")
+                    if config.press_enter_to_continue:
+                        input("Press enter to continue")
                     if (
                         config.upload_to_osm
                         and self.number_of_open_notes <= config.max_number_of_open_notes
                     ):
                         print("Uploading new note")
                         self.upload_note(point=source_point)
-                        input("Press enter to continue")
+                        if config.press_enter_to_continue:
+                            input("Press enter to continue")
                     else:
                         print(
                             "100 open notes already exists or upload was skipped in the config"
@@ -227,7 +229,8 @@ class GeojsonHandler(BaseModel):
                     if config.loglevel == logging.INFO:
                         print("Found the following bathing sites within 100m in OSM")
                         print(osm_distance_df.head())
-                    input("Press enter to continue")
+                    if config.press_enter_to_continue:
+                        input("Press enter to continue")
             else:
                 print("A note has already been created for this feature")
 
