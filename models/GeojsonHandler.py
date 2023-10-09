@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from shapely import Point
 
 import config
+from models.bounding_box import BoundingBox
 from models.exceptions import GeometryError
 from models.osm_note_uploader import OsmNoteHandler
 
@@ -23,11 +24,19 @@ class GeojsonHandler(BaseModel):
     # parse with geopandas
     # for every source feature:
       check if it already exists in osm within 100m
+
+    It uses Points defined like this:
+    # This is a point object where y=latitude and x=longitude
+    latitude = point.y
+    longitude = point.x
+
     """
 
     source_geojson: str = ""
     osm_geojson: str = ""
     notes_file_path: str = ""
+    bounding_box_string: str = ""
+    bbox: BoundingBox = BoundingBox()
 
     source_df: DataFrame = DataFrame()
     osm_df: DataFrame = DataFrame()
@@ -41,9 +50,21 @@ class GeojsonHandler(BaseModel):
 
     def start(self):
         self.setup_argparse_and_get_filename()
+        self.parse_bounding_box()
         self.create_geodataframes()
         self.check_number_of_open_notes()
         self.iterate_source_features()
+
+    def parse_bounding_box(self):
+        """Parse the format from http://osm.duschmarke.de/bbox.html"""
+        if self.bounding_box_string:
+            bbox_list = self.bounding_box_string.split(",") #x1,y1,x2,y2
+            if not len(bbox_list) == 4:
+                raise GeometryError(f"Not a correct bounding box with x1,y1,x2,y2: {self.bounding_box_string}")
+            self.bbox = BoundingBox(x1=bbox_list[0],
+                                    y1=bbox_list[1],
+                                    x2=bbox_list[2],
+                                    y2=bbox_list[3])
 
     def read_notes_dataframe(self):
         if self.notes_df.empty:
@@ -186,7 +207,6 @@ class GeojsonHandler(BaseModel):
         """Iterate the source_df rows and work on them"""
         total_number_of_rows = len(self.source_df.index)
         for index, row in self.source_df.iterrows():
-            # todo check distance to note in the notes.csv file
             # Access individual columns of the row as needed.
             # This is a point object where y=latitude and x=longitude
             source_point: Point = row["geometry"]  # Access the geometry of the feature.
@@ -195,6 +215,18 @@ class GeojsonHandler(BaseModel):
             print(
                 f"Working on feature {index}/{total_number_of_rows}: Geometry: {source_point}, ID: {lm_id}"
             )
+            # First check if the point is withing the bounding box
+            if self.bbox.is_valid:
+                if not self.bbox.check_if_point_is_inside(source_point):
+                    logger.debug("skipping this point because it is not inside the boundary box")
+                    logger.debug(f"See {self.generate_osm_url(source_point)}")
+                    if config.press_enter_to_continue:
+                        input("Press enter to continue")
+                    continue
+                else:
+                    logger.debug(f"point is inside box, See {self.generate_osm_url(source_point)}")
+                    if config.press_enter_to_continue:
+                        input("Press enter to continue")
             # First calculate distance to notes previously created
             notes_distance_df = self.calculate_distance_to_previously_created_osm_notes(
                 point=source_point
@@ -216,10 +248,11 @@ class GeojsonHandler(BaseModel):
                         config.upload_to_osm
                         and self.number_of_open_notes <= config.max_number_of_open_notes
                     ):
+                        print(f"Open notes: {self.number_of_open_notes}")
                         print("Uploading new note")
                         self.upload_note(point=source_point)
-                        if config.press_enter_to_continue:
-                            input("Press enter to continue")
+                        #if config.press_enter_to_continue:
+                        input("Press enter to continue")
                     else:
                         print(
                             "100 open notes already exists or upload was skipped in the config"
@@ -243,8 +276,12 @@ class GeojsonHandler(BaseModel):
         )
         parser.add_argument("--osm-geojson", required=True, help="OSM geojson file")
         parser.add_argument("--notes-file", required=True, help="Notes csv file to use")
+        parser.add_argument("--bounding-box", required=False, help="Restrict note creation to a specific area. "
+                                                                   "E.g. 10.5389,53.7768,10.9262,53.9574. "
+                                                                   "Generate here: http://osm.duschmarke.de/bbox.html")
         args = parser.parse_args()
 
         self.source_geojson = args.source_geojson
         self.osm_geojson = args.osm_geojson
         self.notes_file_path = args.notes_file
+        self.bounding_box_string = args.bounding_box
