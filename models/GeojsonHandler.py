@@ -68,7 +68,7 @@ class GeojsonHandler(BaseModel):
             )
             # write back the file
             self.notes_df.to_csv(self.notes_file_path)
-            # store number of open notes in an attibute
+            # store number of open notes in an attribute
             count_open_notes_after_check = self.notes_df["open"].sum()
             print(f"Open notes after check: {count_open_notes_after_check}")
             self.number_of_open_notes = count_open_notes_after_check
@@ -203,12 +203,12 @@ class GeojsonHandler(BaseModel):
                 print("notes_distance_df")
                 print(notes_distance_df)
             if notes_distance_df.empty:
-                print("No note found withing 100m in OSM in the notes.csv file")
+                print("No note found within 100m in OSM in the notes.csv file")
                 osm_distance_df = self.calculate_distance_to_osm_features(
                     point=source_point
                 )
                 if osm_distance_df.empty:
-                    print("No bathing site found withing 100m in OSM")
+                    print("No bathing site found within 100m in OSM")
                     print(f"See {self.generate_osm_url(source_point)}")
                     if config.press_enter_to_continue:
                         input("Press enter to continue")
