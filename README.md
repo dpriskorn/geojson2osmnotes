@@ -3,7 +3,7 @@ The purpose of this script is to import geojson features as osm notes.
 
 The purpose is to help curate OSM based on messy data from some source.
 
-In the example below we have unreliable data for bathing sites from a Swedish goverment agency.
+In the example below we have unreliable data for bathing sites from a Swedish government agency.
 They don't have names for the site, nor a stable identifier. 
 
 Still the points are useful for OSM editors to know about and check out on the ground.
