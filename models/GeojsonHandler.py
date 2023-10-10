@@ -14,7 +14,6 @@ from models.bounding_box import BoundingBox
 from models.exceptions import GeometryError
 from models.osm_note_uploader import OsmNoteHandler
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -58,13 +57,14 @@ class GeojsonHandler(BaseModel):
     def parse_bounding_box(self):
         """Parse the format from http://osm.duschmarke.de/bbox.html"""
         if self.bounding_box_string:
-            bbox_list = self.bounding_box_string.split(",") #x1,y1,x2,y2
+            bbox_list = self.bounding_box_string.split(",")  # x1,y1,x2,y2
             if not len(bbox_list) == 4:
-                raise GeometryError(f"Not a correct bounding box with x1,y1,x2,y2: {self.bounding_box_string}")
-            self.bbox = BoundingBox(x1=bbox_list[0],
-                                    y1=bbox_list[1],
-                                    x2=bbox_list[2],
-                                    y2=bbox_list[3])
+                raise GeometryError(
+                    f"Not a correct bounding box with x1,y1,x2,y2: {self.bounding_box_string}"
+                )
+            self.bbox = BoundingBox(
+                x1=bbox_list[0], y1=bbox_list[1], x2=bbox_list[2], y2=bbox_list[3]
+            )
 
     def read_notes_dataframe(self):
         if self.notes_df.empty:
@@ -218,13 +218,17 @@ class GeojsonHandler(BaseModel):
             # First check if the point is withing the bounding box
             if self.bbox.is_valid:
                 if not self.bbox.check_if_point_is_inside(source_point):
-                    logger.debug("skipping this point because it is not inside the boundary box")
+                    logger.debug(
+                        "skipping this point because it is not inside the boundary box"
+                    )
                     logger.debug(f"See {self.generate_osm_url(source_point)}")
                     if config.press_enter_to_continue:
                         input("Press enter to continue")
                     continue
                 else:
-                    logger.debug(f"point is inside box, See {self.generate_osm_url(source_point)}")
+                    logger.debug(
+                        f"point is inside box, See {self.generate_osm_url(source_point)}"
+                    )
                     if config.press_enter_to_continue:
                         input("Press enter to continue")
             # First calculate distance to notes previously created
@@ -251,7 +255,7 @@ class GeojsonHandler(BaseModel):
                         print(f"Open notes: {self.number_of_open_notes}")
                         print("Uploading new note")
                         self.upload_note(point=source_point)
-                        #if config.press_enter_to_continue:
+                        # if config.press_enter_to_continue:
                         input("Press enter to continue")
                     else:
                         print(
@@ -276,9 +280,13 @@ class GeojsonHandler(BaseModel):
         )
         parser.add_argument("--osm-geojson", required=True, help="OSM geojson file")
         parser.add_argument("--notes-file", required=True, help="Notes csv file to use")
-        parser.add_argument("--bounding-box", required=False, help="Restrict note creation to a specific area. "
-                                                                   "E.g. 10.5389,53.7768,10.9262,53.9574. "
-                                                                   "Generate here: http://osm.duschmarke.de/bbox.html")
+        parser.add_argument(
+            "--bounding-box",
+            required=False,
+            help="Restrict note creation to a specific area. "
+            "E.g. 10.5389,53.7768,10.9262,53.9574. "
+            "Generate here: http://osm.duschmarke.de/bbox.html",
+        )
         args = parser.parse_args()
 
         self.source_geojson = args.source_geojson
