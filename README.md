@@ -29,7 +29,10 @@ Edit the config and add your credentials.
 
 # Use
 ## CLI
-`python main.py --source-geojson source.geojson --osm-geojson osm.geojson --notes-file notes.csv`
+`python main.py --source-geojson source.geojson --osm-geojson osm.geojson --notes-file notes.csv  --bounding-box 12.0541,59.8233,16.9100,62.3042`
+
+The bounding box is on the same format as the Openstreetmap API, 
+see https://wiki.openstreetmap.org/wiki/Bounding_Box
 
 # Examples
 ## Bathing sites
@@ -67,7 +70,7 @@ out skel qt;
 
 Both files were fed to the script like this
 
-`$ python main.py --source-geojson badplatser_sverige.geojson --osm-geojson export.geojson --notes-file notes.csv`
+`$ python main.py --source-geojson badplatser_sverige.geojson --osm-geojson export.geojson --notes-file notes.csv  --bounding-box 12.0541,59.8233,16.9100,62.3042`
 
 # License
 GPLv3+
