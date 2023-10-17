@@ -16,3 +16,5 @@ Deltag i diskussion om denna notimport på forumet: https://community.openstreet
 #badplatsnotimport
 #scriptcreatednote
 """
+debug = False
+user_agent = "geojson2osmnotes by pangoSE, see https://github.com/dpriskorn/geojson2osmnotes"

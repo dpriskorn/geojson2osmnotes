@@ -51,14 +51,20 @@ class GeojsonHandler(BaseModel):
         self.setup_argparse_and_get_filename()
         self.parse_bounding_box()
         self.create_geodataframes()
-        self.print_number_of_open_notes()
+        self.print_note_status()
+        if self.yes_no_question(question="Check and update note status?"):
+            self.check_note_status()
+            self.print_note_status()
         if self.yes_no_question(question="List URL to open notes?"):
             self.list_open_notes()
-        if self.yes_no_question(question="Check if notes have been closed?"):
-            self.check_number_of_open_notes()
-        self.print_number_of_closed_notes()
         if self.yes_no_question(question="Iterate features and upload notes?"):
             self.iterate_source_features()
+
+    def print_note_status(self):
+        self.print_number_of_open_notes()
+        self.print_number_of_closed_and_unhidden_notes()
+        self.print_number_of_hidden_notes()
+        self.print_number_of_total_notes()
 
     def list_open_notes(self):
         self.read_notes_dataframe()
@@ -100,12 +106,20 @@ class GeojsonHandler(BaseModel):
     def print_number_of_open_notes(self):
         self.read_notes_dataframe()
         if not self.notes_df.empty:
-            # output number of open notes in cache
-            # Count the number of rows where 'open' is True
-            count_open_notes_before_check = self.notes_df["open"].sum()
-            print(f"Open notes before check: {count_open_notes_before_check}")
+            print(f'Open notes: {self.notes_df["open"].sum()}')
 
-    def check_number_of_open_notes(self):
+    def print_number_of_hidden_notes(self):
+        self.read_notes_dataframe()
+        if not self.notes_df.empty:
+            print(f'Hidden notes: {self.notes_df["hidden"].sum()}')
+
+    def print_number_of_total_notes(self):
+        self.read_notes_dataframe()
+        if not self.notes_df.empty:
+            print(f'Total number of notes: {len(self.notes_df)}')
+
+    def check_note_status(self):
+        print("Checking note status for all notes")
         self.read_notes_dataframe()
         if not self.notes_df.empty:
             # We dont need to login to get the status only
@@ -113,7 +127,10 @@ class GeojsonHandler(BaseModel):
             # for each note lookup if open
             # Use apply() to update the 'open' column based on the lookup method
             self.notes_df["open"] = self.notes_df["note_id"].apply(
-                lambda x: self.osmnoteuploader.lookup_note_status(note_id=x)
+                lambda x: self.osmnoteuploader.is_open(note_id=x)
+            )
+            self.notes_df["hidden"] = self.notes_df["note_id"].apply(
+                lambda x: self.osmnoteuploader.is_hidden(note_id=x)
             )
             # write back the file
             self.notes_df.to_csv(self.notes_file_path, index=False)
@@ -122,7 +139,7 @@ class GeojsonHandler(BaseModel):
             print(f"Open notes after check: {count_open_notes_after_check}")
             self.number_of_open_notes = count_open_notes_after_check
         else:
-            print(f"Open notes: {self.number_of_open_notes}")
+            print(f"No notes found in the notes file")
 
     def create_geodataframes(self):
         """Create geodataframes based on the geojson input files"""
@@ -234,9 +251,13 @@ class GeojsonHandler(BaseModel):
     def iterate_source_features(self):
         """Iterate the source_df rows and work on them"""
         if self.number_of_open_notes == 0:
-            self.check_number_of_open_notes()
+            self.check_note_status()
+            self.print_note_status()
         total_number_of_rows = len(self.source_df.index)
         for index, row in self.source_df.iterrows():
+            if self.number_of_open_notes >= 100:
+                print("Maximum number of open notes reached. Stopping")
+                break
             # Access individual columns of the row as needed.
             # This is a point object where y=latitude and x=longitude
             source_point: Point = row["geometry"]  # Access the geometry of the feature.
@@ -285,8 +306,9 @@ class GeojsonHandler(BaseModel):
                         print(f"Open notes: {self.number_of_open_notes}")
                         print("Uploading new note")
                         self.upload_note(point=source_point)
-                        # if config.press_enter_to_continue:
-                        input("Press enter to continue")
+                        # When debugging we show the input
+                        if config.press_enter_to_continue or config.debug:
+                            input("Press enter to continue")
                     else:
                         print(
                             "100 open notes already exists or upload was skipped in the config"
@@ -324,11 +346,9 @@ class GeojsonHandler(BaseModel):
         self.notes_file_path = args.notes_file
         self.bounding_box_string = args.bounding_box
 
-    def print_number_of_closed_notes(self):
+    def print_number_of_closed_and_unhidden_notes(self):
         self.read_notes_dataframe()
         if not self.notes_df.empty:
-            # output number of open notes in cache
-            # Count the number of rows where 'open' is True
-            count_open_notes_before_check = self.notes_df["open"].sum()
-            total_notes = len(self.notes_df)
-            print(f"Number of closed notes: {total_notes-count_open_notes_before_check}")
+            # Count rows where both "open" and "hidden" are False
+            count = len(self.notes_df[(self.notes_df['open'] == False) & (self.notes_df['hidden'] == False)])
+            print(f"Number of closed notes that are not hidden: {count}")

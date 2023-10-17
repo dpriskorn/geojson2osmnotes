@@ -3,7 +3,7 @@ import os.path
 from datetime import datetime
 
 import pandas
-from osmapi import OsmApi
+from osmapi import OsmApi, ElementDeletedApiError
 from pandas import DataFrame
 from pydantic import BaseModel, validate_call
 from shapely import Point
@@ -14,6 +14,10 @@ logger = logging.getLogger(__name__)
 
 
 class NoneException(BaseException):
+    pass
+
+
+class HiddenNoteError(BaseException):
     pass
 
 
@@ -30,18 +34,23 @@ class OsmNoteHandler(BaseModel):
         arbitrary_types_allowed = True
 
     def initialize_client(self):
-        self.client = OsmApi(self.username, self.password)
+        self.client = OsmApi(self.username, self.password, created_by=config.user_agent)
         self.initialized = True
 
     @validate_call(config=dict(arbitrary_types_allowed=True))
     def create_and_upload_note(self, point: Point, text: str = config.note_text) -> int:
-        # Create a new note
+        logger.debug("Creating a new note")
         latitude = point.y
         longitude = point.x
         try:
             note = self.client.NoteCreate(dict(lat=latitude, lon=longitude, text=text))
-            # print(note)
+            logger.debug(note)
+            # When debugging we show the input
+            if config.press_enter_to_continue or config.debug:
+                input("Press enter to continue")
             note_id = note["id"]
+            if self.is_hidden(note_id=note_id):
+                raise HiddenNoteError()
             self.write_note_information_to_csv(note_id=note_id, point=point)
             return note_id
         except Exception as e:
@@ -63,6 +72,7 @@ class OsmNoteHandler(BaseModel):
             "latitude": [point.y],
             "longitude": [point.x],
             "open": True,
+            "hidden": False
         }
 
         # Append the new data to the DataFrame
@@ -70,20 +80,31 @@ class OsmNoteHandler(BaseModel):
         # write
         df.to_csv(file, index=False)
 
-    def lookup_note_status(self, note_id: int) -> bool:
+    def is_open(self, note_id: int) -> bool:
         try:
             note = self.client.NoteGet(id=note_id)
             # print(note)
             # note_id = note["id"]
             note_status = note["status"]
-            # Alternatively, you can use a dictionary to map values to booleans
             status_mapping = {"open": True, "closed": False}
             is_open = status_mapping.get(
                 note_status, None
-            )  # Returns None for unknown statuses
+            )  # Returns False for unknown statuses
             if is_open is not None:
                 return is_open
             else:
                 raise NoneException()
-        except Exception as e:
-            print(f"Error getting note status: {str(e)}")
+        except ElementDeletedApiError as e:
+            # Why does this happen? Because the node has been hidden by a moderator?
+            # See https://wiki.openstreetmap.org/wiki/API_v0.6
+            # awaiting response from the operations team
+            logger.info(f"Error getting note status: {str(e)}")
+            # Defaulting to False
+            return False
+
+    def is_hidden(self, note_id: int) -> bool:
+        try:
+            self.client.NoteGet(id=note_id)
+            return False
+        except ElementDeletedApiError:
+            return True
