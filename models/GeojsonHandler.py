@@ -51,8 +51,32 @@ class GeojsonHandler(BaseModel):
         self.setup_argparse_and_get_filename()
         self.parse_bounding_box()
         self.create_geodataframes()
-        self.check_number_of_open_notes()
-        self.iterate_source_features()
+        self.print_number_of_open_notes()
+        if self.yes_no_question(question="List URL to open notes?"):
+            self.list_open_notes()
+        if self.yes_no_question(question="Check if notes have been closed?"):
+            self.check_number_of_open_notes()
+        self.print_number_of_closed_notes()
+        if self.yes_no_question(question="Iterate features and upload notes?"):
+            self.iterate_source_features()
+
+    def list_open_notes(self):
+        self.read_notes_dataframe()
+        if not self.notes_df.empty:
+            for index, row in self.notes_df.iterrows():
+                if row['open']:
+                    note_id = row['note_id']
+                    print(f"https://www.openstreetmap.org/note/{note_id}")
+
+    def yes_no_question(self, question: str, default=None) -> bool:
+        choices = ("", "y", "n") if default in ("yes", "no") else ("y", "n")
+        hint = "Y/n" if default == "yes" else "y/n"
+        hint = "y/N" if default == "no" else hint
+        reply = None
+
+        while reply not in choices:
+            reply = input(f"{question} ({hint}): ").lower()
+        return (reply == "y") if default != "yes" else (reply in ("", "y"))
 
     def parse_bounding_box(self):
         """Parse the format from http://osm.duschmarke.de/bbox.html"""
@@ -73,13 +97,17 @@ class GeojsonHandler(BaseModel):
             if os.path.exists(file) and os.path.getsize(file):
                 self.notes_df = pandas.read_csv(file)
 
-    def check_number_of_open_notes(self):
+    def print_number_of_open_notes(self):
         self.read_notes_dataframe()
         if not self.notes_df.empty:
             # output number of open notes in cache
             # Count the number of rows where 'open' is True
             count_open_notes_before_check = self.notes_df["open"].sum()
             print(f"Open notes before check: {count_open_notes_before_check}")
+
+    def check_number_of_open_notes(self):
+        self.read_notes_dataframe()
+        if not self.notes_df.empty:
             # We dont need to login to get the status only
             # self.initialize_note_uploader()
             # for each note lookup if open
@@ -88,8 +116,8 @@ class GeojsonHandler(BaseModel):
                 lambda x: self.osmnoteuploader.lookup_note_status(note_id=x)
             )
             # write back the file
-            self.notes_df.to_csv(self.notes_file_path)
-            # store number of open notes in an attribute
+            self.notes_df.to_csv(self.notes_file_path, index=False)
+            # store number of open notes in an attibute
             count_open_notes_after_check = self.notes_df["open"].sum()
             print(f"Open notes after check: {count_open_notes_after_check}")
             self.number_of_open_notes = count_open_notes_after_check
@@ -205,6 +233,8 @@ class GeojsonHandler(BaseModel):
 
     def iterate_source_features(self):
         """Iterate the source_df rows and work on them"""
+        if self.number_of_open_notes == 0:
+            self.check_number_of_open_notes()
         total_number_of_rows = len(self.source_df.index)
         for index, row in self.source_df.iterrows():
             # Access individual columns of the row as needed.
@@ -239,12 +269,12 @@ class GeojsonHandler(BaseModel):
                 print("notes_distance_df")
                 print(notes_distance_df)
             if notes_distance_df.empty:
-                print("No note found within 100m in OSM in the notes.csv file")
+                print("No note found withing 100m in OSM in the notes.csv file")
                 osm_distance_df = self.calculate_distance_to_osm_features(
                     point=source_point
                 )
                 if osm_distance_df.empty:
-                    print("No bathing site found within 100m in OSM")
+                    print("No bathing site found withing 100m in OSM")
                     print(f"See {self.generate_osm_url(source_point)}")
                     if config.press_enter_to_continue:
                         input("Press enter to continue")
@@ -293,3 +323,12 @@ class GeojsonHandler(BaseModel):
         self.osm_geojson = args.osm_geojson
         self.notes_file_path = args.notes_file
         self.bounding_box_string = args.bounding_box
+
+    def print_number_of_closed_notes(self):
+        self.read_notes_dataframe()
+        if not self.notes_df.empty:
+            # output number of open notes in cache
+            # Count the number of rows where 'open' is True
+            count_open_notes_before_check = self.notes_df["open"].sum()
+            total_notes = len(self.notes_df)
+            print(f"Number of closed notes: {total_notes-count_open_notes_before_check}")
