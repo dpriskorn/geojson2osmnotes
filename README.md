@@ -1,4 +1,6 @@
 # geojson2osmnotes
+**Warning: automatic note creation is not endorsed by the community. MapRoulette or a regular import should be used instead, see https://wiki.openstreetmap.org/wiki/Notes**
+
 The purpose of this script is to import geojson features as osm notes.
 
 The purpose is to help curate OSM based on messy data from some source.
