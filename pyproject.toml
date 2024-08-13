@@ -14,7 +14,8 @@ requests = "^2.31.0"
 rich = "^13.5.2"
 geopandas = "^0.14.0"
 geopy = "^2.4.0"
-osmapi = "^4.0.0"
+osmapi = "^4.2.0"
+requests-oauth2client = "^1.5.3"
 
 [tool.poetry.group.dev.dependencies]
 bandit = "^1.7.4"

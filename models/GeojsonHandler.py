@@ -49,6 +49,7 @@ class GeojsonHandler(BaseModel):
 
     def start(self):
         self.setup_argparse_and_get_filename()
+        self.initialize_note_uploader()
         self.check_note_status()
         # self.list_open_notes()
         # self.print_note_status()
@@ -76,7 +77,6 @@ class GeojsonHandler(BaseModel):
         if not self.notes_df.empty:
             count_open_notes = self.notes_df["open"].sum()
             print(f"closing all {count_open_notes} open notes...")
-            self.initialize_note_uploader()
             self.notes_df["open"] = self.notes_df["note_id"].apply(
                 lambda x: self.osmnoteuploader.close(note_id=x, comment="Closing because there is now a maproulette challenge for this, see https://maproulette.org/browse/challenges/48914")
             )

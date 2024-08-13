@@ -85,3 +85,4 @@ To the Magnus Sälgö and the Swedish OSM community for feedback.
 without explicitly telling it to.
 * Geopandas and geopy are super nice and fast.
 * Lambda + apply is a pain in the ass. Fortunately chatgpt provided a working workaround.
+* Oauth2 for a command line script is easy once you have a good example to follow :)
