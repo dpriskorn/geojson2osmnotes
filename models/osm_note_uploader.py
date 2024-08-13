@@ -108,3 +108,6 @@ class OsmNoteHandler(BaseModel):
             return False
         except ElementDeletedApiError:
             return True
+
+    def close(self, note_id: int, comment):
+        self.client.NoteClose(note_id, comment)

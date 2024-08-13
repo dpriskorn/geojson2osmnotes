@@ -49,30 +49,64 @@ class GeojsonHandler(BaseModel):
 
     def start(self):
         self.setup_argparse_and_get_filename()
-        self.parse_bounding_box()
-        self.create_geodataframes()
-        self.print_note_status()
-        if self.yes_no_question(question="Check and update note status?"):
-            self.check_note_status()
-            self.print_note_status()
-        if self.yes_no_question(question="List URL to open notes?"):
-            self.list_open_notes()
-        if self.yes_no_question(question="Iterate features and upload notes?"):
-            self.iterate_source_features()
+        self.check_note_status()
+        # self.list_open_notes()
+        # self.print_note_status()
+        self.close_all_open_notes()
+        # self.setup_argparse_and_get_filename()
+        # self.parse_bounding_box()
+        # self.create_geodataframes()
+        # self.print_note_status()
+        # if self.yes_no_question(question="Check and update note status?"):
+        #     self.check_note_status()
+        #     self.print_note_status()
+        # if self.yes_no_question(question="List URL to open notes?"):
+        #     self.list_open_notes()
+        # if self.yes_no_question(question="Iterate features and upload notes?"):
+        #     self.iterate_source_features()
+
+    def check_empty_notes_df(self):
+        if self.notes_df.empty:
+            raise Exception("notes df was empty")
+
+    def close_all_open_notes(self):
+        logger.debug("close_all_open_notes: running")
+        self.read_notes_dataframe()
+        self.check_empty_notes_df()
+        if not self.notes_df.empty:
+            count_open_notes = self.notes_df["open"].sum()
+            print(f"closing all {count_open_notes} open notes...")
+            self.initialize_note_uploader()
+            self.notes_df["open"] = self.notes_df["note_id"].apply(
+                lambda x: self.osmnoteuploader.close(note_id=x, comment="Closing because there is now a maproulette challenge for this, see https://maproulette.org/browse/challenges/48914")
+            )
+            print("done")
+            # for index, row in self.notes_df.iterrows():
+            #     if row['open']:
+            #         note_id = row['note_id']
+            #         print(f"closing https://www.openstreetmap.org/note/{note_id}...")
+        else:
+            logger.info("dataframe was empty")
+
 
     def print_note_status(self):
+        self.check_empty_notes_df()
         self.print_number_of_open_notes()
         self.print_number_of_closed_and_unhidden_notes()
         self.print_number_of_hidden_notes()
         self.print_number_of_total_notes()
 
     def list_open_notes(self):
+        logger.debug("list_open_notes: running")
         self.read_notes_dataframe()
+        self.check_empty_notes_df()
         if not self.notes_df.empty:
             for index, row in self.notes_df.iterrows():
                 if row['open']:
                     note_id = row['note_id']
                     print(f"https://www.openstreetmap.org/note/{note_id}")
+        else:
+            logger.info("dataframe was empty")
 
     def yes_no_question(self, question: str, default=None) -> bool:
         choices = ("", "y", "n") if default in ("yes", "no") else ("y", "n")
@@ -97,11 +131,15 @@ class GeojsonHandler(BaseModel):
             )
 
     def read_notes_dataframe(self):
+        logger.debug("read_notes_dataframe: running")
         if self.notes_df.empty:
+            logger.debug("reading dataframe from disk...")
             # read the csv if any
             file = self.notes_file_path
             if os.path.exists(file) and os.path.getsize(file):
                 self.notes_df = pandas.read_csv(file)
+        else:
+            logger.info("dataframe was not empty")
 
     def print_number_of_open_notes(self):
         self.read_notes_dataframe()
@@ -328,9 +366,9 @@ class GeojsonHandler(BaseModel):
             description="Read and process Geojson files from the command line."
         )
         parser.add_argument(
-            "--source-geojson", required=True, help="Source geojson file"
+            "--source-geojson", required=False, help="Source geojson file"
         )
-        parser.add_argument("--osm-geojson", required=True, help="OSM geojson file")
+        parser.add_argument("--osm-geojson", required=False, help="OSM geojson file")
         parser.add_argument("--notes-file", required=True, help="Notes csv file to use")
         parser.add_argument(
             "--bounding-box",
